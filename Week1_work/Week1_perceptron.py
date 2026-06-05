@@ -11,8 +11,8 @@ MODEL_PATH = Path(__file__).with_name("first_model.pkl")
 
 def create_data():
     try:
-        X, Y = make_moons(n_samples=1000, noise=0.1, random_state=42)
-        Y = Y.reshape(1000, 1)
+        X, Y = make_moons(n_samples=5000, noise=0.1, random_state=42)
+        Y = Y.reshape(5000, 1)
         return X, Y
     except Exception as e:
         print("Error loading dataset:", e)
@@ -139,10 +139,10 @@ if __name__ == "__main__":
         first_model = Model.load(MODEL_PATH)
         print(f"Loaded saved model from {MODEL_PATH}")
     else:
-        first_model = Model(X.shape, Y.shape)
-        first_model.train(X, Y)
-        first_model.save(MODEL_PATH)
-        print(f"Saved trained model to {MODEL_PATH}")
+      first_model = Model(X.shape, Y.shape)
+      first_model.train(X, Y)
+      first_model.save(MODEL_PATH)
+      print(f"Saved trained model to {MODEL_PATH}")
 
     print(first_model.predict(X)[:10])
 # try: 
