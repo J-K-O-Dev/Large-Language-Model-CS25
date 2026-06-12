@@ -1,4 +1,4 @@
-### Week 2: My First LSTM for Text Generation
+### Week 2 Report: My First LSTM for Text Generation
 
 After getting my feet wet with feed-forward networks in Week 1, I was ready to dive into something more complex. This week was all about tackling sequential data with a powerful architecture: the Long Short-Term Memory (LSTM) model. My goal was to build one from the ground up and teach it to generate text, character by character.
 
