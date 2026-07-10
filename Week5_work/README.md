@@ -1,39 +1,36 @@
-### Week 5 Report: Efficient Fine-Tuning with LoRA
+### Week 5 Report: Evaluating and Running Large-Scale Models
 
-Week 4 was a great introduction to the power of adapting large, pretrained models. However, it also highlighted a major bottleneck: full fine-tuning, where every weight in the model is updated, is incredibly resource-intensive. It requires a huge amount of VRAM and results in a full-sized model checkpoint for every new task. This week, I tackled that problem head-on by exploring **Parameter-Efficient Fine-Tuning (PEFT)**, specifically a popular and powerful technique called **Low-Rank Adaptation (LoRA)**.
+After fine-tuning models in Week 4, a natural next step was to understand how we measure if one model is "better" than another. This week, I moved into the world of model evaluation and the practical engineering challenges of running truly large-scale models. The work was twofold: first, I conducted a systematic evaluation of GPT-2 variants to observe **scaling laws** in action using perplexity. Second, I tackled the challenge of loading and running a much larger, state-of-the-art model, Llama 3 8B, which required exploring techniques like quantization.
 
-#### The Theory: Training a Fraction to Tune the Whole
+#### The Theory: Scaling Laws, Perplexity, and Quantization
 
-The core idea behind PEFT is to adapt a large language model to a new task without retraining all of its parameters. LoRA is a particularly clever way to do this.
+- **Perplexity (PPL):** A core metric for evaluating language models. It measures how well a probability model predicts a sample. In simple terms, it's a measure of "surprise." A lower perplexity means the model is less surprised by the test data, indicating it has learned the underlying language patterns more effectively.
 
-- **The Problem with Full Fine-Tuning:** A model like GPT-2 has over 100 million parameters. When you fine-tune it, you're calculating gradients and updating every single one of them. This is slow, memory-hungry, and means that if you fine-tune the model for 10 different tasks, you end up with 10 separate, large model copies.
+- **Scaling Laws:** A key finding in LLM research is that model performance (like perplexity) improves predictably as you increase model size, dataset size, and computational budget. This experiment aimed to verify the model size aspect: as the number of parameters in a model increases, its perplexity on a standard benchmark should decrease.
 
-- **The LoRA Solution:** LoRA hypothesizes that the _change_ in the weights needed for fine-tuning has a low "intrinsic rank." This means the update can be represented efficiently. Instead of updating the massive original weight matrix `W`, LoRA freezes it and injects a pair of small, trainable "adapter" matrices (`A` and `B`) into the model's layers (typically the attention layers).
-  - The update is decomposed into two low-rank matrices: `ΔW = B * A`.
-  - During training, only `A` and `B` are updated. Since their rank `r` is much smaller than the original dimensions, the number of trainable parameters is drastically reduced (often by over 99%).
-  - For inference, the learned weights can be merged back into the original weights (`W' = W + BA`) with no additional latency.
+- **Quantization:** Running a model with billions of parameters like Llama 3 (8B) is impossible on consumer GPUs, as the weights alone (in 16-bit precision) would require over 16GB of VRAM. **Quantization** is a technique to reduce this memory footprint. It involves converting the model's weights from high-precision floating-point numbers (like FP16) to lower-precision integers (like 8-bit or 4-bit). This drastically reduces the model size and memory usage, often with only a small impact on performance, making large models accessible.
 
-This approach makes fine-tuning much more accessible, allowing for faster training on consumer hardware and creating tiny, portable adapter checkpoints (often just a few megabytes) for each task.
+#### Implementation Part 1: Verifying Scaling Laws with GPT-2
 
-#### Implementation: LoRA for Code Generation with PEFT
+The work in `perplexity_comparision_gpt2.ipynb` was a direct test of scaling laws.
 
-To test this, I created the `LoRA_Fine_tuning.ipynb` notebook. I decided to use the same GPT-2 model and MBPP dataset from Week 4 to get a direct comparison against full fine-tuning. The implementation relied heavily on the Hugging Face `peft` library.
+- **Models:** I evaluated four standard GPT-2 variants: `gpt2` (124M), `gpt2-medium` (355M), `gpt2-large` (774M), and `gpt2-xl` (1.5B).
+- **Evaluation:** I calculated the perplexity for each model on the test set of the WikiText-2 dataset. To handle sequences longer than the model's context window (1024 tokens), I used a sliding window approach with a stride of 512 tokens. This ensures the entire dataset is evaluated without losing context.
+- **Results:** The results clearly demonstrated the scaling law. As the model size increased from 124M to 1.5B parameters, the perplexity consistently dropped. This was a powerful, practical demonstration of why bigger models have become the standard.
 
-- **Setting up LoRA:** The process was surprisingly straightforward:
-  1.  Load the pretrained `gpt2` model and tokenizer.
-  2.  Define a `LoraConfig` object. Here, I specified the `r` (rank), `lora_alpha` (a scaling factor), `target_modules` (telling the library which layers to adapt, in this case, the attention layers `c_attn`), and `lora_dropout`.
-  3.  Use the `get_peft_model` function to wrap the base model with the LoRA adapters.
+#### Implementation Part 2: Running Llama 3 8B with Quantization
 
-- **Drastic Parameter Reduction:** The most striking part was seeing the numbers. The wrapped model had only a tiny fraction of its parameters set as trainable. This immediately demonstrated the efficiency of the method—I was preparing to train less than 1% of the model's total weights.
+The second part of this week's work, documented in `load_llama3_8b.ipynb`, was to run a model far too large for my hardware.
 
-- **Training with the `Trainer` API:** The beauty of the `peft` library is its seamless integration with the existing Hugging Face ecosystem. The same `Trainer` and `TrainingArguments` workflow from Week 4 worked with the PEFT model without any major changes. The library handles the logic of freezing the base model and only updating the adapter weights during backpropagation.
-
-- **Saving the Adapter:** After training, instead of saving another 500MB+ model, I only had to save the learned adapter weights. The resulting checkpoint was just a few megabytes, making it incredibly easy to store and share.
+- **The Challenge:** The Llama 3 8B model is a massive leap from GPT-2. Loading it directly would cause an out-of-memory error on a typical Colab GPU.
+- **The Solution:** I used the `bitsandbytes` library integrated with Hugging Face `transformers` to load the model in 4-bit precision (`bnb_4bit_quant_type="nf4"`). This involves loading the base model with a `BitsAndBytesConfig` that tells the library to quantize the weights on the fly.
+- **Inference:** After successfully loading the quantized model, I ran a few sample prompts through its generation pipeline. While not a rigorous evaluation, it confirmed that the model was functional and could produce coherent text even after its weights were compressed into a 4-bit format.
 
 #### Key Takeaways
 
-This week was a huge "aha!" moment regarding the practicality of LLMs. While building a Transformer in Week 3 was about understanding the architecture, and full fine-tuning in Week 4 was about the standard workflow, this week was about making it all _feasible_.
+This week connected the dots between model architecture, evaluation, and deployment. It's one thing to train a model; it's another to measure its performance and figure out how to actually run it.
 
-The core learning was that you don't need to move a mountain to change its path. LoRA showed that by training a very small number of well-placed parameters, you can steer a massive pretrained model toward a new task with surprisingly good results. The performance on the code generation task was comparable to the fully fine-tuned model from last week, but the training was faster and used significantly less memory.
-
-This feels like a critical piece of the modern LLM puzzle. Techniques like LoRA are what enable developers and researchers without access to massive GPU clusters to experiment with and deploy powerful models. It's the bridge between the theoretical power of LLMs and their real-world application. I'm now much more confident that I can take on even larger models, knowing there are efficient ways to adapt them.
+- **Scaling Laws are Real:** Seeing perplexity drop predictably as parameter count increased was a concrete validation of one of the most fundamental principles driving LLM development.
+- **Perplexity as a Benchmark:** This week gave me hands-on experience with perplexity as a core evaluation metric. It's a standardized way to compare different language models on their fundamental ability to model language.
+- **The Memory Wall is Real:** My attempt to load Llama 3 8B without quantization failed instantly. This made the hardware and memory constraints of LLMs incredibly tangible. It's not just about theory; it's about engineering.
+- **Quantization is a Key Enabler:** Successfully running an 8B parameter model on a free Colab instance felt like a superpower. It showed that techniques like 4-bit quantization are not just academic tricks but essential tools for making LLMs practical for a wider audience.
