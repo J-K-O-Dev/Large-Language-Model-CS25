@@ -20,7 +20,8 @@ model=LlavaNextForConditionalGeneration.from_pretrained(
     quantization_config=quantization,
     device_map='auto'
 )
-image=Image.open("../Mid-term_Report/assets/week1_loss_accuracy.png").convert("RGB")
+
+image=Image.open("week1_loss_accuracy.jpg").convert("RGB")
 
 prompt="[INST] <image>\nDescribe what you see in this image and explain the humor or context if any. [/INST]"
 
