@@ -53,3 +53,9 @@ yarn-error.log*
 
 # OS-specific
 .DS_Store
+
+*.sqlite3
+*.bin
+*.log
+*.iso
+*.pickle
