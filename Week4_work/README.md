@@ -1,41 +1,65 @@
-### Week 4 Report: Fine-Tuning Pretrained Models
+# Week 4 - Fine-Tuning Pretrained Models
 
-After spending Week 3 building a decoder-only Transformer, this week felt like stepping into the world where these architectures are actually used in practice. Instead of writing every layer by hand, I focused on fine-tuning pretrained models with the Hugging Face ecosystem. The main idea was simple but powerful: take a model that already knows a lot from large-scale pretraining, then adapt it to a more specific task.
+Week 4 moved from building architectures manually to adapting existing pretrained models. The focus was transfer learning: take a model that already learned broad language patterns, then fine-tune it for a specific task.
 
-This week had two tracks. First, I fine-tuned BERT for sentiment classification on the SST-2 dataset. Then I worked with GPT-2 as a causal language model and fine-tuned it on programming problems from MBPP. It was a nice shift from pure architecture-building to learning the real training workflow used around modern language models.
+## Goal
 
-#### The Theory: Transfer Learning and Fine-Tuning
+Fine-tune BERT for sentiment classification and GPT-2 for code-style generation.
 
-The biggest concept this week was **transfer learning**. In the earlier weeks, the models started from random weights and had to learn everything from scratch. With pretrained models, the base model already has useful language representations, so fine-tuning becomes the process of nudging those representations toward a particular task.
+## Files
 
-- **Pretraining vs Fine-Tuning:** Pretraining teaches a model broad language patterns using massive data. Fine-tuning is much more focused. We use a smaller, task-specific dataset and update the model so it becomes better at one kind of problem, like sentiment classification or code-style generation.
+| File | Purpose |
+| --- | --- |
+| `Fine_tune.ipynb` | BERT fine-tuning on SST-2 sentiment classification |
+| `GPT2.ipynb` | GPT-2 causal language-model fine-tuning on MBPP coding examples |
+| `../Mid-term_Report/assets/week4_bert_trainer_loss.jpg` | Saved BERT training-loss plot |
+| `../Mid-term_Report/assets/week4_gpt2_trainer_loss.jpg` | Saved GPT-2 training-loss plot |
 
-- **BERT for Classification:** BERT is an encoder-based model, which makes it strong for understanding tasks. For sentiment analysis, I used `bert-base-uncased` with a sequence classification head. Since SST-2 is a binary classification dataset, the model only needed two output labels: positive or negative.
+## What Was Implemented
 
-- **GPT-2 for Causal Language Modeling:** GPT-2 is decoder-only, so it fits naturally with next-token prediction. For the coding experiment, I formatted each MBPP example as a problem statement followed by its solution. This turns the task into language modeling: given the problem prompt and previous code tokens, the model learns to predict the next token in the solution.
+- Loaded `bert-base-uncased` with `AutoModelForSequenceClassification`.
+- Used the SST-2 sentiment dataset with two labels: positive and negative.
+- Tokenized data with the matching BERT tokenizer.
+- Used Hugging Face `Trainer`, `TrainingArguments`, and `DataCollatorWithPadding`.
+- Loaded GPT-2 with `AutoModelForCausalLM`.
+- Formatted MBPP examples as problem statements followed by code solutions.
+- Used `DataCollatorForLanguageModeling` with `mlm=False`.
+- Saved the fine-tuned model outputs from the notebooks.
 
-- **Tokenization and Padding:** A big practical lesson was that the model is only as happy as the data pipeline feeding it. BERT used its own tokenizer and dynamic padding through `DataCollatorWithPadding`, while GPT-2 needed its padding token set to the end-of-sequence token and used `DataCollatorForLanguageModeling` with `mlm=False`.
+## Result
 
-#### Implementation: Hugging Face in Practice
+The BERT training curve was noisy at the step level, but its moving average settled around the `0.2-0.3` loss range. The GPT-2 coding fine-tuning run moved from high initial loss to roughly `5` by the end of the logged steps.
 
-This week, most of the work happened inside two notebooks, and the Hugging Face libraries made the training pipeline much cleaner than writing everything manually.
+The important result was practical: I learned the full Hugging Face fine-tuning loop, including model loading, tokenization, collators, trainer configuration, training, and saving.
 
-- **Fine-Tuning BERT:** In `Copy of Fine_tune.ipynb`, I loaded `bert-base-uncased` using `AutoModelForSequenceClassification` with `num_labels=2`. The dataset came from `stanfordnlp/sst2`, which includes train, validation, and test splits. After tokenizing the sentences, I used `TrainingArguments`, `Trainer`, and `DataCollatorWithPadding` to handle the training loop. Finally, the trained model was saved as `./final_bert_sentiment_model`.
+## How To Run
 
-- **Fine-Tuning GPT-2:** In `Copy of GPT2.ipynb`, I loaded GPT-2 with `AutoModelForCausalLM` and used the GPT-2 tokenizer. The dataset was `google-research-datasets/mbpp`, and I wrote a formatting function that converted each example into a clean prompt:
-  - a problem description inside a comment block
-  - a solution section containing the reference code
+Open either notebook:
 
-- **Preparing the Code Dataset:** The MBPP examples were mapped into a single text field before tokenization. This made the dataset compatible with causal language modeling, where the model learns from one continuous sequence instead of separate input and label columns.
+```bash
+jupyter notebook Week4_work/Fine_tune.ipynb
+jupyter notebook Week4_work/GPT2.ipynb
+```
 
-- **Trainer Workflow:** The `Trainer` API handled the repeated forward pass, loss calculation, backpropagation, and optimizer steps. Compared to the earlier weeks, where I had to manually think through every gradient and update, this felt much more like using a professional training pipeline. The GPT-2 coding model was saved as `./final_gpt2_coding_model`.
+Colab or another GPU environment is recommended, especially for repeated experiments.
 
-#### Key Takeaways
+## Requirements
 
-This week showed me a different side of LLM work. In Weeks 1 to 3, the focus was on understanding what is inside the model. Week 4 was about learning how to actually adapt powerful pretrained models to useful downstream tasks.
+Relevant Python packages:
 
-The BERT notebook made the fine-tuning workflow feel concrete: load a pretrained checkpoint, attach or initialize the right task head, tokenize the dataset properly, train, and save the result. The GPT-2 notebook was especially interesting because it connected directly to code generation. Formatting the MBPP data as "problem plus solution" made it clear how much prompt structure matters when training language models.
+- `torch`
+- `transformers`
+- `datasets`
+- `accelerate`
 
-The biggest realization was that using pretrained models does not mean the hard parts disappear. The hard parts just move. Instead of deriving every gradient by hand, I had to think carefully about datasets, tokenizers, padding, labels, collators, training arguments, and model saving. It felt like moving one level up the stack, from building the engine to learning how to tune and drive it properly.
+They are included in the root `requirements.txt`.
 
-After this week, I feel much more comfortable with the practical side of modern NLP. Building a Transformer from scratch gave me the intuition for what these models are doing internally, and fine-tuning BERT and GPT-2 showed me how that knowledge plugs into real tools and real tasks. It was a satisfying bridge between theory and application.
+## Learning From The PoA
+
+The PoA separates the main pretraining paradigms clearly. BERT is encoder-based and learns bidirectional representations through masked language modelling, which makes it strong for understanding tasks like classification. GPT is decoder-only and learns by causal next-token prediction, which makes it natural for generation.
+
+Fine-tuning showed what transfer learning really means in practice. The model already contains broad language knowledge, and the task-specific dataset nudges that knowledge toward sentiment classification or code completion. This also made prompt and dataset formatting feel like part of the model, not just preprocessing.
+
+## Takeaway
+
+Fine-tuning felt easier than writing a Transformer from scratch, but the hard parts did not disappear. They moved into dataset formatting, tokenization, padding, labels, collators, batch size, and evaluation.

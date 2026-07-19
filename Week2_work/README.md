@@ -1,33 +1,59 @@
-### Week 2 Report: My First LSTM for Text Generation
+# Week 2 - LSTM Text Generation
 
-After getting my feet wet with feed-forward networks in Week 1, I was ready to dive into something more complex. This week was all about tackling sequential data with a powerful architecture: the Long Short-Term Memory (LSTM) model. My goal was to build one from the ground up and teach it to generate text, character by character.
+Week 2 moved from fixed-size inputs to sequences. After the NumPy network, I wanted to understand how a model can carry information across time and use previous tokens to predict the next one.
 
-#### The Theory Behind LSTMs
+## Goal
 
-Before I could write any code, I had to spend a good chunk of time hitting the books (or, well, the online articles and papers) to really understand what makes LSTMs tick.
+Train an LSTM-based text generator and sample text from it after learning patterns in a Shakespeare-style corpus.
 
-- **The Leap from RNNs to LSTMs:** I started with the basics of Recurrent Neural Networks (RNNs). The idea of a hidden state that acts as a 'memory' was cool, but I quickly learned about their major weakness: the vanishing and exploding gradient problems. This makes it tough for them to remember things from way back in a sequence.
+## Files
 
-- **Inside the LSTM Cell:** That's where the LSTM comes in. It's a clever upgrade to the RNN designed to fix that long-term memory issue. The magic is in its cell structure, which has a few key parts:
-  - **Cell State:** Think of it as a conveyor belt for memory, letting information pass through the whole sequence with minimal changes.
-  - **Forget Gate:** Decides what old information is no longer relevant and should be thrown away.
-  - **Input Gate:** Decides what new information is important enough to be stored.
-  - **Output Gate:** Decides what part of the cell's memory to use for the final output at that step.
+| File | Purpose |
+| --- | --- |
+| `Copy_of_Character_level_LSTM_model.ipynb` | Main LSTM notebook |
+| `../Mid-term_Report/assets/week2_lstm_loss_original.png` | Saved training-loss plot |
 
-- **The Math: Forward and Backward:** I then had to trace the path of the data through the network (the forward pass) and, more importantly, the path of the error back through time (Backpropagation Through Time, or BPTT). Getting the math right for how the gradients flow through all those gates was crucial for making the model learn anything.
+## What Was Implemented
 
-#### Implementation from Scratch
+- Loaded a text dataset through `kagglehub`.
+- Cleaned and tokenized the text into a vocabulary.
+- Converted tokens into integer IDs for model input.
+- Prepared input-target sequence pairs for next-token prediction.
+- Built an LSTM model in PyTorch with an embedding layer, recurrent layers, and a final linear output layer.
+- Trained with cross-entropy loss and the Adam optimizer.
+- Tracked training loss across epochs.
+- Added a generation function that starts from seed text and repeatedly predicts the next token.
 
-With the theory down, it was time to get my hands dirty with the implementation.
+## Result
 
-- **Preparing the Data:** I started with a small text file as my dataset. The first task was to get it ready for the network. This meant creating a vocabulary of every unique character, mapping each one to a number, and then chopping the text up into input sequences and their corresponding target characters.
+The saved loss curve shows training loss falling from about `10.1` to about `7.2` over 50 epochs. The generated samples were still small and imperfect, but the model moved from random-looking output toward recognizable word and phrase patterns.
 
-- **Building the `LSTM` Class:** Just like last week, I built the model inside a Python class to keep things organized. This class was responsible for initializing all the weight and bias matrices for the gates, handling the forward pass to process a sequence, running the backward pass (BPTT) to learn, and updating the parameters. A fun new addition was a `sample` method to see what the model was thinking and generate new text.
+## How To Run
 
-- **The Training Loop:** I trained the model over many epochs, feeding it sequences of characters and asking it to predict the next one. The loss function was Cross-Entropy, which makes sense for a classification problem like this (picking the right character out of the whole vocabulary). The best part was periodically sampling text from the model during training. It was amazing to watch it go from spitting out random nonsense to forming actual words and simple sentences.
+Open the notebook:
 
-#### Key Takeaways
+```bash
+jupyter notebook Week2_work/Copy_of_Character_level_LSTM_model.ipynb
+```
 
-This week was a huge leap in complexity from the simple network I built in Week 1. Juggling all the parameters and making sure the gradients were flowing correctly through time (BPTT) took a lot of careful coding and debugging. But, seeing the model actually start to generate coherent text, one character at a time, was an incredibly rewarding "it's alive!" moment.
+This notebook is also suitable for Google Colab. A GPU is useful but not strictly required for the small experiment.
 
-Building this from scratch really hammered home how RNNs and LSTMs "think" about sequences. It gave me a gut feeling for what's happening under the hood, which I know will be invaluable as we move on to even more advanced architectures. This feels like a critical piece of the puzzle, and I'm excited for what's next.
+## Requirements
+
+Relevant Python packages:
+
+- `torch`
+- `matplotlib`
+- `kagglehub`
+
+They are included in the root `requirements.txt`.
+
+## Learning From The PoA
+
+The PoA places this week in the pre-Transformer NLP era: tokenization, embeddings, language modelling, RNNs, and LSTMs. The important idea was that text has order, and a model needs some way to carry information from earlier tokens into later predictions.
+
+LSTMs improve on plain RNNs with gates that decide what to remember, forget, and expose as output. At the same time, this week also showed why Transformers were needed later: recurrent models process tokens sequentially, are harder to parallelize, and still struggle with very long-range dependencies.
+
+## Takeaway
+
+The biggest lesson was that sequence modeling is not just about the model. Data preparation matters a lot: vocabulary, sequence length, input-target alignment, and sampling all affect whether the LSTM learns anything useful.

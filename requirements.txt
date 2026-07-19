@@ -1,20 +1,33 @@
+accelerate
 bitsandbytes
 chromadb
 datasets
+diffusers
 docx2txt
 faiss-cpu
+flask
+flask-cors
+jupyter
+kagglehub
 langchain
 langchain-community
 langchain-core
 langchain-text-splitters
 matplotlib
 numpy
+pandas
 peft
+pillow
 pymupdf
 pypdf
 scikit-learn
+sentencepiece
 sentence-transformers
 tiktoken
 torch
+tqdm
 transformers
 trl
+
+# Colab/TPU-only notebook imports such as google.colab and torch_xla are not
+# included here because they are environment-specific.

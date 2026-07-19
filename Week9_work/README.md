@@ -1,61 +1,85 @@
-# Week 9 Report: Exploring Multimodal AI with LLaVA and Stable Diffusion
+# Week 9 - Multimodal AI With LLaVA And Stable Diffusion
 
-This week, the project expanded beyond text-only models into the exciting realm of multimodal AI. The focus was on two key capabilities: understanding visual information (image-to-text) and generating visual content from text descriptions (text-to-image). To explore these, I worked with two powerful open-source models: LLaVA and Stable Diffusion, both accessed through the Hugging Face ecosystem.
+Week 9 moved beyond text-only language models. I explored both sides of multimodal AI: a model that can understand images and a model that can generate images from text.
 
-## 1. Image Understanding with LLaVA (Vision-Language Model)
+## Goal
 
-The first part of this week's work involved using a Vision-Language Model (VLM) to interpret and describe an image.
+Run image-to-text understanding with LLaVA and text-to-image generation with Stable Diffusion.
 
-- **File**: `llava.py`
-- **Model**: `llava-hf/llava-v1.6-mistral-7b-hf`, a state-of-the-art VLM that combines a vision encoder with the Mistral-7B language model.
-- **Task**: The script loads the LLaVA model and an image (the training graph from the Week 1 report). It then prompts the model to describe what it sees, demonstrating the model's ability to reason about visual data.
-- **Technical Details**: To make this large 7-billion-parameter model runnable on consumer hardware, it's loaded using 4-bit quantization via the `BitsAndBytesConfig` from the `transformers` library. This significantly reduces the memory footprint. The script also shows how to construct a multimodal prompt containing both text and image placeholders.
+## Files
 
-### How to Run `llava.py`
+| File | Purpose |
+| --- | --- |
+| `llava.py` | Loads LLaVA and asks it to describe a training-curve image |
+| `difussion.py` | Generates an image from a text prompt with Stable Diffusion |
+| `week1_loss_accuracy.jpg` | Image input used by the LLaVA script |
+| `generated_lab.png` | Stable Diffusion output image |
 
-1.  **Install Dependencies**:
+## What Was Implemented
 
-    ```bash
-    pip install torch transformers bitsandbytes accelerate Pillow
-    ```
+### LLaVA Image Understanding
 
-2.  **Run the Script**:
-    ```bash
-    python llava.py
-    ```
+- Loaded `llava-hf/llava-v1.6-mistral-7b-hf`.
+- Used `LlavaNextProcessor`, tokenizer, and image processor.
+- Loaded the model with 4-bit quantization through `BitsAndBytesConfig`.
+- Opened `week1_loss_accuracy.jpg` with Pillow.
+- Built a prompt containing the `<image>` placeholder.
+- Generated a textual description of the image.
 
-The script will download the model (this may take some time on the first run), load it onto the GPU, and print the model's textual description of the image to the console.
+### Stable Diffusion Image Generation
 
-## 2. Image Generation with Stable Diffusion
+- Loaded `runwayml/stable-diffusion-v1-5`.
+- Used `StableDiffusionPipeline` from `diffusers`.
+- Loaded the pipeline in `torch.float16`.
+- Generated an image from the prompt:
 
-The second part focused on the creative side of multimodal AI: generating images from text prompts.
+```text
+A high-tech research lab with glowing holographic matrices, cinematic lighting, photorealistic, 8k resolution
+```
 
-- **File**: `difussion.py`
-- **Model**: `runwayml/stable-diffusion-v1-5`, a widely-used latent diffusion model.
-- **Task**: This script showcases the power of text-to-image generation. It takes a detailed text prompt ("A high-tech research lab...") and uses the Stable Diffusion pipeline from the `diffusers` library to generate a high-quality, photorealistic image.
-- **Technical Details**: The model pipeline is loaded in `float16` (half-precision) to optimize for speed and reduce VRAM usage on the GPU. The script runs the inference pipeline for 30 steps and saves the resulting image to a file.
+- Saved the result as `generated_lab.png`.
 
-### How to Run `difussion.py`
+## Result
 
-1.  **Install Dependencies**:
+The LLaVA script produced a text description of the Week 1 training plot, showing how a vision-language model can interpret a chart-like image.
 
-    ```bash
-    pip install torch diffusers transformers
-    ```
+The Stable Diffusion script generated and saved a photorealistic research-lab image at:
 
-2.  **Run the Script**:
-    ```bash
-    python difussion.py
-    ```
+```text
+Week9_work/generated_lab.png
+```
 
-An image file named `generated_lab.png` will be saved in the `Week9_work` directory.
+## How To Run
 
-## 3. Learnings and Reflections
+Run from inside `Week9_work`, because both scripts use relative file paths:
 
-This week was a fantastic demonstration of how the transformer architecture has been adapted for more than just text.
+```bash
+cd Week9_work
+python llava.py
+python difussion.py
+```
 
-- **Complementary Modalities**: It was fascinating to work on both sides of the multimodal coin. LLaVA deconstructs an image into a textual understanding, while Stable Diffusion constructs an image from a textual concept.
-- **The Power of the Ecosystem**: Working with these models highlights the power of the Hugging Face ecosystem (`transformers`, `diffusers`). It makes it incredibly straightforward to download, configure, and run state-of-the-art models with just a few lines of code.
-- **Hardware and Optimization**: The practical necessity of techniques like 4-bit quantization and half-precision floating points became very clear. These methods are essential for making billion-parameter models accessible without requiring an industrial-scale data center.
+A CUDA GPU is expected. Both scripts call `.to("cuda")`, and LLaVA is a large model even with 4-bit quantization.
 
-Overall, this week successfully bridged the gap from pure language processing to the rich, interconnected world of text and vision.
+## Requirements
+
+Relevant Python packages:
+
+- `torch`
+- `transformers`
+- `bitsandbytes`
+- `accelerate`
+- `pillow`
+- `diffusers`
+
+They are included in the root `requirements.txt`.
+
+## Learning From The PoA
+
+The PoA expands the Transformer story beyond text. Vision Transformers treat images as patches, CLIP connects images and text with contrastive learning, and vision-language models such as LLaVA attach visual understanding to an LLM so it can answer questions about images.
+
+Stable Diffusion represents the generative side of vision. Instead of classifying or describing an image, it learns to reverse a noise process and create an image from a text prompt. Running both LLaVA and Stable Diffusion made the difference clear: one model reads visual information into language, while the other turns language into visual content.
+
+## Takeaway
+
+This week showed that the same ecosystem used for language models can extend naturally into vision. LLaVA turns an image into language-level reasoning, while Stable Diffusion turns language into an image. Together, they make the project feel less like "only NLP" and more like a doorway into general multimodal systems.

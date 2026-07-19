@@ -5,7 +5,7 @@ import tiktoken
 import matplotlib.pyplot as plt
 import torch.nn.functional as F 
 
-if torch.cuda.is_available:
+if torch.cuda.is_available():
     device='cuda'
 else:
     device='cpu'

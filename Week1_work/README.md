@@ -1,24 +1,65 @@
-### Week 1 Report: Building a Neural Network from Scratch
+# Week 1 - Neural Network From Scratch
 
-This week marked the beginning of my journey into building Large Language Models from scratch, as part of the project with the Mathematics and Physics club at IIT Bombay. The primary focus was on understanding the fundamental building blocks of neural networks, both theoretically and practically.
+Week 1 was about opening the black box. Before moving toward language models, I built a small neural network with only NumPy so that the basic learning loop was completely visible: predictions, loss, gradients, parameter updates, and evaluation.
 
-#### Mathematical Foundations
+## Goal
 
-A significant portion of the week was dedicated to diving into the mathematics that powers neural networks. I started with the basics of a simple two-layer neural network architecture. Key concepts I explored include:
+Build and test a two-layer neural network for binary classification on a non-linear toy dataset.
 
-- **Forward Propagation:** Understanding how input data flows through the network, gets transformed by weights, biases, and activation functions to produce an output. I implemented this using the sigmoid activation function.
-- **Loss Function:** To measure how well our model is performing, I learned about and implemented the Binary Cross-Entropy loss function, which is suitable for the binary classification task I was tackling.
-- **Backpropagation and Gradient Descent:** This was the most challenging yet rewarding part. I worked through the calculus to understand how the error is propagated backward through the network. This allowed me to calculate the gradients of the loss function with respect to the weights and biases, which are then used to update the model's parameters via gradient descent.
+## Files
 
-#### Implementation from Scratch
+| File | Purpose |
+| --- | --- |
+| `Week1_perceptron.py` | Main NumPy implementation, training loop, save/load logic |
+| `Testing.py` | Loads the saved model and checks accuracy on fresh `make_moons` data |
+| `../Mid-term_Report/assets/week1_loss_accuracy.jpg` | Saved training plot used in the report |
 
-Putting theory into practice, I built a neural network from the ground up using Python and NumPy. This hands-on experience was invaluable for solidifying my understanding.
+## What Was Implemented
 
-- **The `Model` Class:** I created a Python class to encapsulate the neural network. It handles parameter initialization, forward pass (prediction), backward pass (learning), and the main training loop.
-- **Dataset:** I used the `make_moons` dataset from `scikit-learn` to create a non-linearly separable binary classification problem, which is a classic test for a simple neural network.
-- **Training and Evaluation:** The model was trained over a number of epochs. During training, I monitored the loss and accuracy to see the learning progress. I also implemented a mechanism to save the trained model using `pickle`.
-- **Testing:** A separate script (`Testing.py`) was written to load the saved model and test its performance on a new set of data, confirming that the model had learned to generalize.
+- Generated a `make_moons` dataset with scikit-learn.
+- Built a two-layer neural network with one hidden layer and one sigmoid output.
+- Implemented the forward pass manually with NumPy matrix operations.
+- Used binary cross-entropy as the loss function.
+- Derived and coded backpropagation by hand.
+- Updated weights and biases using gradient descent.
+- Added accuracy calculation with a `0.5` decision threshold.
+- Saved and loaded the trained model using `pickle`.
+- Wrote a separate testing script to verify the saved model.
 
-#### Key Takeaways
+## Result
 
-This week was a deep dive into the core mechanics of neural networks. While libraries like PyTorch or TensorFlow abstract away much of this complexity, building it from scratch with NumPy provided a crucial intuition for what's happening under the hood. This foundational knowledge feels essential as we move towards more complex architectures in the coming weeks. The successful implementation and training of this simple model have been a great confidence booster.
+The model learned the non-linear decision boundary clearly. From the saved plot, binary cross-entropy dropped from about `0.69` to about `0.26`, while accuracy improved to roughly `0.88-0.89`.
+
+That result was enough to confirm that the hand-written forward pass, backward pass, and update rules were working.
+
+## How To Run
+
+From the repository root:
+
+```bash
+python Week1_work/Week1_perceptron.py
+python Week1_work/Testing.py
+```
+
+The first command trains the model if `first_model.pkl` is not already present. The second command loads the saved model and prints predictions plus final accuracy.
+
+## Requirements
+
+Relevant Python packages:
+
+- `numpy`
+- `pandas`
+- `matplotlib`
+- `scikit-learn`
+
+They are included in the root `requirements.txt`.
+
+## Learning From The PoA
+
+The Plan of Action frames this week as the foundation week: linear algebra, calculus, probability, and Python fluency. In this implementation, matrix multiplication became the forward pass, the chain rule became backpropagation, and binary cross-entropy connected the model directly to probability.
+
+The main learning was that neural networks are not mysterious at the small scale. They are repeated numerical steps: initialize weights, predict, measure error, compute gradients, update, and repeat. Writing the MLP without PyTorch autograd made every shape and derivative visible.
+
+## Takeaway
+
+This week made backpropagation feel real. Libraries are helpful later, but writing the gradients by hand made it much easier to understand what a neural network is actually doing when it "learns."

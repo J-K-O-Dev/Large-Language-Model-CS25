@@ -1,114 +1,115 @@
-# Week 8 Report: Full-Stack RAG Chatbot with React and Flask
+# Week 8 - RAG Chatbot With Flask And React
 
-This project culminates the work of the past weeks by integrating the RAG (Retrieval-Augmented Generation) pipeline into a complete, full-stack web application. It features a modern React frontend for the user interface and a powerful Python Flask backend to serve the language model and RAG components.
+Week 8 turned the project from notebooks into an interactive application. The goal was to build a Retrieval-Augmented Generation chatbot that can answer with context from local LLM research papers.
 
-## 1. Project Overview
+The backend handles loading, chunking, embedding, retrieval, and generation. The frontend gives the user a simple chat interface with persistent history.
 
-The goal of this week was to move beyond notebooks and standalone scripts to build a practical, interactive chatbot. The application allows a user to have a contextual conversation with an AI that can retrieve information from a local document store to provide informed, relevant answers.
+## Goal
 
-- **Frontend**: A responsive chat interface built with React that persists conversation history.
-- **AI Model**: Uses the `TinyLlama/TinyLlama-1.1B-Chat-v1.0` model for text generation, augmented with context from a local document collection.
+Build a full-stack local RAG chatbot over a folder of documents.
 
-## 2. Architecture
+## Files
 
-The application follows a standard client-server model.
+| File or folder | Purpose |
+| --- | --- |
+| `notebook/RAG_Pipe_Line.ipynb` | Original RAG pipeline notebook |
+| `notebook/app.py` | Flask backend with `/chat` endpoint |
+| `data/` | Local PDF knowledge base and persistent ChromaDB store |
+| `react_interface/` | React frontend |
+| `react_interface/package.json` | Frontend dependencies and npm scripts |
 
-### Frontend (Client)
+## What Was Implemented
 
-- **Location**: `react_interface/`
-- **Framework**: React.js
-- **Key Features**:
-  - A clean, modern chat UI with distinct bubbles for user and bot messages.
-  - An input box that is disabled during model generation to prevent duplicate requests.
-  - A loading indicator to show when the bot is "thinking".
-  - **Persistent Chat History**: The conversation is automatically saved to the browser's `localStorage`, so it remains even after closing the tab.
-  - **Contextual API Calls**: On each send, the entire chat history is sent to the backend, allowing the model to maintain context.
-  - A "Clear Chat" button to easily start a new conversation.
+- Multi-file document loader for `.pdf`, `.docx`, `.txt`, `.csv`, and `.json`.
+- Recursive text chunking with LangChain splitters.
+- Sentence embeddings with `all-MiniLM-L6-v2`.
+- Persistent ChromaDB vector storage in `data/vector_store/`.
+- Retrieval of the top relevant chunks for a user query.
+- TinyLlama generation through Hugging Face `transformers`.
+- Flask API endpoint:
+  - `POST /chat`
+  - accepts conversation history
+  - retrieves context for the latest user message
+  - builds an augmented prompt
+  - returns a generated reply
+- React chat interface with:
+  - user and assistant message bubbles
+  - loading state
+  - disabled input while generation runs
+  - localStorage-backed chat history
+  - clear chat action
 
-### Backend (Server)
+## Result
 
-- **Location**: `backend/`
-- **Framework**: Flask (with Flask-CORS for cross-origin requests from the React app).
-- **Key Features**:
-  - **`/chat` Endpoint**: A single API endpoint that accepts a `POST` request containing the conversation history.
-  - **RAG Pipeline Integration**: All the Python classes from the `RAG_Pipe_Line.ipynb` notebook are integrated directly into the server.
-    - `MultiFileLoader`: Loads various document types (`.pdf`, `.docx`, `.txt`, etc.) from the `data/` directory.
-    - `Chunker`: Splits documents into smaller, manageable chunks.
-    - `EmbeddingManager`: Uses `sentence-transformers` to convert text chunks into vector embeddings.
-    - `VectorStoreManager`: Manages a persistent vector database using **ChromaDB**. The database is created on the first run and loaded on subsequent runs.
-    - `RAGRetriever`: Retrieves the most relevant document chunks for a given user query.
-  - **LLM Integration**: Uses the `TinyLlama-1.1B-Chat-v1.0` model from Hugging Face for generating responses.
-  - **Context-Aware Prompting**: The backend constructs a detailed prompt for the LLM that includes a system message, the previous conversation history, and the context retrieved by the RAG pipeline.
+The RAG notebook loaded `227` document pages from the six local PDFs in `data/`. The backend builds or reuses a ChromaDB vector store, retrieves relevant chunks, and passes that context into TinyLlama before generation.
 
-## 3. How to Run
+The result is a usable local chatbot that can ground its answers in the provided LLM papers instead of relying only on model weights.
 
-Follow these steps to get the full application running on your local machine.
+## How To Run
 
-### Prerequisites
+Install Python dependencies from the root first:
 
-- Python 3.8+ and `pip` (or `pipenv`).
-- Node.js and `npm`.
-- A CUDA-enabled GPU is highly recommended for running the backend models efficiently.
+```bash
+pip install -r requirements.txt
+```
 
-### Backend Setup
+Start the backend from the `notebook` directory so relative paths resolve correctly:
 
-1.  **Navigate to the backend directory:**
-    ```bash
-    cd backend
-    ```
+```bash
+cd Week8_work\notebook
+python app.py
+```
 
-2.  **Set up a Python virtual environment.** If using `pipenv`:
-    ```bash
-    # Specify your Python version
-    pipenv install --python 3.10
-    ```
+The backend runs on:
 
-3.  **Install the required Python packages:**
-    ```bash
-    # If using pipenv
-    pipenv install Flask Flask-Cors torch transformers sentence-transformers chromadb "langchain-community>=0.0.29" pypdf docx2txt tiktoken
+```text
+http://localhost:5000
+```
 
-    # If using pip
-    pip install Flask Flask-Cors torch transformers sentence-transformers chromadb "langchain-community>=0.0.29" pypdf docx2txt tiktoken
-    ```
+Start the React frontend in a second terminal:
 
-4.  **Prepare your data:**
-    - Create a `data` directory inside the `Week8_work` folder (i.e., at the same level as `backend/` and `react_interface/`).
-    - Place any documents (`.pdf`, `.txt`, `.docx`) you want the chatbot to have knowledge of inside this `data/` directory.
+```bash
+cd Week8_work\react_interface
+npm install
+npm start
+```
 
-5.  **Run the Flask server:**
-    ```bash
-    # If using pipenv
-    pipenv run python app.py
+The frontend usually opens on:
 
-    # If using pip with a venv
-    python app.py
-    ```
-    - The first time you run the server, it will process all documents in the `data/` directory, create embeddings, and build the ChromaDB vector store. This may take a few minutes depending on the number of documents. Subsequent runs will be much faster as they will load the existing database.
-    - The backend will be running at `http://localhost:5000`.
+```text
+http://localhost:3000
+```
 
-### Frontend Setup
+## Requirements
 
-1.  **Open a new terminal** and navigate to the frontend directory:
-    ```bash
-    cd react_interface
-    ```
+Python packages:
 
-2.  **Install the required npm packages:**
-    ```bash
-    npm install
-    ```
+- `flask`
+- `flask-cors`
+- `torch`
+- `transformers`
+- `sentence-transformers`
+- `chromadb`
+- `langchain-community`
+- `langchain-core`
+- `langchain-text-splitters`
+- `pypdf`
+- `docx2txt`
+- `tiktoken`
+- `scikit-learn`
 
-3.  **Start the React development server:**
-    ```bash
-    npm start
-    ```
+Frontend requirements:
 
-4.  **Open the application:**
-    - Your browser should automatically open a new tab with the chat interface at `http://localhost:3000`.
-    - You can now start chatting with your RAG-powered bot!
+- Node.js
+- npm
+- React dependencies from `react_interface/package.json`
 
----
+## Learning From The PoA
 
-This setup provides a robust foundation for a contextual chatbot. The separation of frontend and backend makes the system scalable and maintainable, while the RAG pipeline ensures that the model's responses are grounded in the provided knowledge base.
+The PoA explains RAG as a way to move beyond closed-book generation. Instead of expecting the LLM to store every fact inside its weights, the system retrieves relevant external documents at inference time and places them into the prompt.
 
+The core learning was the full retrieval loop: load documents, split them into chunks, embed each chunk, store vectors, retrieve the top matching chunks, and generate with grounded context. This is also the base layer for more agentic systems, where an LLM can call tools, run code, or search through external resources in multiple steps.
+
+## Takeaway
+
+RAG made the language model feel much more useful. Instead of asking the model to remember everything, the system retrieves relevant source text at query time and gives the model better context for answering.
